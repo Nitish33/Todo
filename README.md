@@ -1,79 +1,46 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+### Install instruction.
 
-# Getting Started
+1. Clone the repo
+2. use `npm i` to install dependency
+3. Run using `npm start` command
 
->**Note**: Make sure you have completed the [React Native - Environment Setup](https://reactnative.dev/docs/environment-setup) instructions till "Creating a new application" step, before proceeding.
 
-## Step 1: Start the Metro Server
+### Data type
+```
+type TaskType = {
+  id: number;           ----> Local id given to new task
+  title: string;        ----> Store todo text
+  completed: boolean;   ----> Task is completed or not
+  isSynced: boolean;    ----> will be true when data is synced with server
 
-First, you will need to start **Metro**, the JavaScript _bundler_ that ships _with_ React Native.
+  remoteId?: number;    ----> If a task is synced with server we will have remote Id. 
 
-To start Metro, run the following command from the _root_ of your React Native project:
+  <!-- It will store the last update state of the data -->
+  status?: 'added' | 'updated' | 'deleted';
+};
 
-```bash
-# using npm
-npm start
-
-# OR using Yarn
-yarn start
 ```
 
-## Step 2: Start your Application
+### Flow to add new todo
+1. When user add a new task, I are updating our async store `useAddNewTodo`
+2. Once the mutation is complete, I are also invalidate sync query `useSyncMutation`
+3. `useSyncMutation` fetch all the data from async store, loop over the list and filter all the tasks which are not synced.
+4. For every `unsynced` item, I are making a post request `useAddNewTodoRemote` in parallel. 
+5. After all request are fulfilled, I am iterating over response and for every successful request, updating the `Task` and finally saving the updated `Task` in the store. 
 
-Let Metro Bundler run in its _own_ terminal. Open a _new_ terminal from the _root_ of your React Native project. Run the following command to start your _Android_ or _iOS_ app:
 
-### For Android
+> I am first storing the data in local and then trying to upload to remote in the sync cycle instead of first trying for online and if it fail, storing it in the local store. This is done to remove duplicate logic from 2 places and simplify the flow.
 
-```bash
-# using npm
-npm run android
 
-# OR using Yarn
-yarn android
-```
+### Why I am not using TanStack in-build offline persistence  
+1. In-build persistence is helpful when storing small amount to data in Async store but for Offline first app, we might want to use more complex database like watermalonDB, sqlite or room db.
+2. In-build solution do not normalize the data, making it memory inefficient.
+3. Dependent mutation is hard. Suppose we have two mutation
+   
+   Record 1    -> mutation 1 -> Record 1'
 
-### For iOS
+   Record 1'   -> mutation 2 -> Record 1''
 
-```bash
-# using npm
-npm run ios
+   Now while syncing, We don't want to try mutation 2 without the successful completion of mutation 1
 
-# OR using Yarn
-yarn ios
-```
 
-If everything is set up _correctly_, you should see your new app running in your _Android Emulator_ or _iOS Simulator_ shortly provided you have set up your emulator/simulator correctly.
-
-This is one way to run your app — you can also run it directly from within Android Studio and Xcode respectively.
-
-## Step 3: Modifying your App
-
-Now that you have successfully run the app, let's modify it.
-
-1. Open `App.tsx` in your text editor of choice and edit some lines.
-2. For **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Developer Menu** (<kbd>Ctrl</kbd> + <kbd>M</kbd> (on Window and Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (on macOS)) to see your changes!
-
-   For **iOS**: Hit <kbd>Cmd ⌘</kbd> + <kbd>R</kbd> in your iOS Simulator to reload the app and see your changes!
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [Introduction to React Native](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you can't get this to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
